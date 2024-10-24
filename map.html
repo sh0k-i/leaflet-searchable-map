@@ -66,7 +66,7 @@
                         const featureLayer = searchLayer.getLayers().find(layer => 
                             layer.feature.properties['Full Address'] === title);
                         if (featureLayer) {
-                            map.setView(latlng, 10);
+                            map.setView(latlng, 12);
                             featureLayer.openPopup(); // Open the popup for the feature
                         }
                     },
@@ -74,7 +74,7 @@
                         const feature = searchLayer.getLayers().find(layer => layer.feature.properties['Full Address'] === title);
                         if (feature) {
                             const lastName = feature.feature.properties['Last Name'];
-                            return `<strong>${lastName}<br>${title}`;
+                            return `<strong>${lastName}<br><small>${title}`;
                         }
                     }
                 });
