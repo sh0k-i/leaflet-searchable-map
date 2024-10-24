@@ -42,28 +42,42 @@
                 // Initialize the search control
                 const searchControl = new L.Control.Search({
                     layer: searchLayer,
-                    propertyName: 'Last Name', 
-                    zoom: 10,
-                    marker: false,
-                    moveToLocation: function(latlng, title, map) {
-                        map.setView(latlng, 10); // You can adjust the zoom level as needed
-                    },
-                    filter: function(text, layer) {
-                        // Filter results to include both Last Name and Full Address
-                        const results = [];
-                        layer.eachLayer(function(l) {
-                            const lastName = l.feature.properties['Last Name'] ? l.feature.properties['Last Name'].toLowerCase() : '';
-                            const fullAddress = l.feature.properties['Full Address'] ? l.feature.properties['Full Address'].toLowerCase() : '';
+                    autoType: false, // no auto-completion
+                    filterData: function(text, allRecords) { // Return the results that match the search text for both Full Address and Last Name
+                        const results = {};
+                        searchLayer.eachLayer(function(layer) {
+                            const fullAddress = layer.feature.properties['Full Address'] || '';
+                            const lastName = layer.feature.properties['Last Name'] || '';
 
-                            // Check if the search text is in either the Last Name or Full Address
-                            if (lastName.includes(text.toLowerCase()) || fullAddress.includes(text.toLowerCase())) {
-                                results.push(l);
+                            // Check if the text is in Full Address OR Last Name
+                            if (fullAddress.toLowerCase().includes(text.toLowerCase()) || 
+                                lastName.toLowerCase().includes(text.toLowerCase())) {
+                                
+                                // Combine Full Address and Last Name for the results
+                                results[fullAddress] = layer.feature.properties;
                             }
                         });
+
                         return results;
+                    },
+                    propertyName: 'Full Address',
+                    zoom: 10,
+                    moveToLocation: function(latlng, title, map) {
+                        const featureLayer = searchLayer.getLayers().find(layer => 
+                            layer.feature.properties['Full Address'] === title);
+                        if (featureLayer) {
+                            map.setView(latlng, 10);
+                            featureLayer.openPopup(); // Open the popup for the feature
+                        }
+                    },
+                    buildTip: function (title) { // Build the tooltip for the search results
+                        const feature = searchLayer.getLayers().find(layer => layer.feature.properties['Full Address'] === title);
+                        if (feature) {
+                            const lastName = feature.feature.properties['Last Name'];
+                            return `<strong>${lastName}<br>${title}`;
+                        }
                     }
                 });
-
                 // Add the search control to the map
                 map.addControl(searchControl);
             })
