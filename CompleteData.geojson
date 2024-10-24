@@ -1,0 +1,65 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -77.59386,
+          37.62883
+        ]
+      },
+      "properties": {
+        "Last Name": "Rowe",
+        "Full Address": "2505 Whiteclift Drive, Henrico, Virginia 23233, United States",
+        "Address Number": "2505",
+        "Street": "Whiteclift Drive",
+        "Postal Code": "23233",
+        "Region": "Virginia",
+        "Country": "United States",
+        "Product": "Windows"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -76.414002,
+          37.042895
+        ]
+      },
+      "properties": {
+        "Last Name": "McQuestion",
+        "Full Address": "117 Springdale Way, Hampton, Virginia 23666, United States",
+        "Address Number": "117",
+        "Street": "Springdale Way",
+        "Postal Code": "23666",
+        "Region": "Virginia",
+        "Country": "United States",
+        "Product": "Windows"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -76.533159,
+          37.106399
+        ]
+      },
+      "properties": {
+        "Last Name": "RUPERT",
+        "Full Address": "102 Alberta Drive, Newport News, Virginia 23602, United States",
+        "Address Number": "102",
+        "Street": "Alberta Drive",
+        "Postal Code": "23602",
+        "Region": "Virginia",
+        "Country": "United States",
+        "Product": "Windows"
+      }
+    }
+  ]
+}
