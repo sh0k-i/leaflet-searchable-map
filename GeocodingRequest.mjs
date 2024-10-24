@@ -4,7 +4,7 @@ import fetch from 'node-fetch';
 import fs from 'fs'; 
 import initialData from './initialData.json' assert { type: 'json' };
 
-const accessToken = 'sk.eyJ1Ijoic2hvay1pIiwiYSI6ImNtMmV0cTNpdzAyanAya3F5dndjNjExOHcifQ.9uTf5uVBeiBPtJ8ABUrYUQ'; 
+const accessToken = ''; 
 
 // Function to fetch geocoding data from Mapbox using the correct endpoint
 async function geocodeAddress(address) {
