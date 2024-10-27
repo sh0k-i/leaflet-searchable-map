@@ -7,7 +7,7 @@ const completeData = JSON.parse(fs.readFileSync('./CompleteData.json', 'utf-8'))
 // Convert the data to GeoJSON format
 const geojsonData = GeoJSON.parse(completeData, {
     Point: ['Latitude', 'Longitude'], // Specify the geometry attributes
-    include: ['Last Name', 'Full Address', 'Address Number', 'Street', 'Postal Code', 'Region', 'Country', 'Product'] // Include additional properties
+    include: ['Last Name', 'Full Address', 'Product'] // Include additional properties
 });
 
 // Save the GeoJSON to a file

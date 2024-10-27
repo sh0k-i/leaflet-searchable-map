@@ -13,7 +13,10 @@ This project implements a searchable map using Leaflet and GeoJSON. You can sear
  Node.js and node-fetch for making HTTP requests `npm install node-fetch`
 
 #### Geocoding Script:
-Ran GeocodingRequest.mjs script to iterate over each address and send a request to Mapboxs Geocoding API and returns the best result based on specific conditions. Stores the data in a json file 'Coordinates.json' 
+Ran GeocodingRequest.mjs script to iterate over each address and send a request to Mapboxs Geocoding API and returns the best result based on specific conditions. 
+- Stores matched addresses in a json file 'CompleteData.json' 
+- Stores unmatched addresses in a json file 'Unmatched.json' 
+- Stores failed requests in a json file 'Failed.json' 
 
 #### Create geojson file 
 - Installed package `npm install geojson`
@@ -25,4 +28,5 @@ The HTML file implements a searchable map using Leaflet.js and the Leaflet Searc
 **External Libraries and Resources:**
 • **Leaflet.js**: Used to initialize and display the interactive map.
 • **Leaflet Search**: Adds search functionality to the map for finding markers by specific properties.
+• **Leaflet Marker Cluster**: Clusters groups nearby points together when zoomed out.
 • **Map Tiles**: OpenStreetMap tiles are provided by MapTiler.

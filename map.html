@@ -5,83 +5,107 @@
     <link rel="stylesheet" href="leaflet-search-master/dist/leaflet-search.src.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script src="leaflet-search-master/dist/leaflet-search.src.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
     <style>
-        #map {position: absolute; top: 0; bottom: 0; left: 0; right: 0;}
+        #map { position: absolute; top: 0; bottom: 0; left: 0; right: 0; }
     </style>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Searchable Map</title>
-    
 </head>
 <body>
-    <h1>Searchable Map</h1>
     <div id="map"></div>
     <script>
-        // Initialize map
-        var map = L.map('map').setView([38.690003, -100.809859], 5);
+        // Initialize map with clustering and lazy loading
+        var map = L.map('map').setView([36.62883, -78.59386], 8);
         L.tileLayer('https://api.maptiler.com/maps/openstreetmap/{z}/{x}/{y}.jpg?key=I6761RArt0HdUnABZ0bd', {
-        attribution: '<a href="https://www.maptiler.com/copyright/" target="_blank">&copy; MapTiler</a> <a href="https://www.openstreetmap.org/copyright" target="_blank">&copy; OpenStreetMap contributors</a>'
+            attribution: '&copy; MapTiler &copy; OpenStreetMap contributors'
         }).addTo(map);
 
-        // Fetch CompleteData.geojson from the same folder
+        var markers = L.markerClusterGroup(); // Initialize marker cluster group
+        var worker; // Web worker for data processing
+
+        // Function to load markers lazily based on map bounds
+        function loadMarkers(geojsonData) {
+            markers.clearLayers(); // Clear existing markers
+            var filteredData = geojsonData.features.filter(feature => {
+                var coords = feature.geometry.coordinates;
+                return map.getBounds().contains([coords[1], coords[0]]); // Only add visible markers
+            });
+
+            L.geoJSON(filteredData, {
+                onEachFeature: function (feature, layer) {
+                    const popupContent = `<strong>Last Name:</strong> ${feature.properties['Last Name']}<br>
+                                          <strong>Full Address:</strong> ${feature.properties['Full Address']}<br>
+                                          <strong>Product:</strong> ${feature.properties['Product']}`;
+                    layer.bindPopup(popupContent);
+                }
+            }).addTo(markers);
+        }
+
+        // Lazy load markers on map move or zoom
+        map.on('moveend', () => {
+            if (worker) worker.terminate();
+            worker = new Worker('dataWorker.js');
+            worker.onmessage = (e) => loadMarkers(e.data);
+            worker.postMessage({ bounds: map.getBounds() });
+        });
+
+        map.addLayer(markers);
+
+        // Fetch geojson data
         fetch('CompleteData.geojson')
-            .then(response => response.json())  // Parse the JSON from the response
-            .then(CompleteData => {
-                // Create a GeoJSON layer with the fetched data
-                const searchLayer = L.geoJSON(CompleteData, {
-                    onEachFeature: function (feature, layer) {
-                        // Bind a popup to each feature`
-                        layer.bindPopup(feature.properties.name);
-                        const fullAddress = feature.properties['Full Address'] || 'Address not available';
-                        const lastName = feature.properties['Last Name'] || 'Last Name not available';
-                        const product = feature.properties['Product'] || 'Product not available';
-                        layer.bindPopup(`<strong>Last Name:</strong> ${lastName}<br><strong>Full Address:</strong> ${fullAddress}<br><strong>Product:</strong> ${product}`);
-                    }
-                }).addTo(map);
+            .then(response => response.json())
+            .then(data => {
+                worker = new Worker('dataWorker.js'); // Instantiate worker
+                worker.onmessage = (e) => loadMarkers(e.data);
+                worker.postMessage({ geojson: data, bounds: map.getBounds() });
+            });
 
-                // Initialize the search control
-                const searchControl = new L.Control.Search({
-                    layer: searchLayer,
-                    autoType: false, // no auto-completion
-                    filterData: function(text, allRecords) { // Return the results that match the search text for both Full Address and Last Name
-                        const results = {};
-                        searchLayer.eachLayer(function(layer) {
-                            const fullAddress = layer.feature.properties['Full Address'] || '';
-                            const lastName = layer.feature.properties['Last Name'] || '';
+        // Initialize search control
+        const searchControl = new L.Control.Search({
+            layer: markers,
+            autoType: false, // no auto-completion
+            filterData: function(text, allRecords) { // Return the results that match the search text for both Full Address and Last Name
+                const results = {};
+                markers.eachLayer(function(layer) {
+                    const fullAddress = layer.feature.properties['Full Address'] || '';
+                    const lastName = layer.feature.properties['Last Name'] || '';
 
-                            // Check if the text is in Full Address OR Last Name
-                            if (fullAddress.toLowerCase().includes(text.toLowerCase()) || 
-                                lastName.toLowerCase().includes(text.toLowerCase())) {
-                                
-                                // Combine Full Address and Last Name for the results
-                                results[fullAddress] = layer.feature.properties;
-                            }
-                        });
-
-                        return results;
-                    },
-                    propertyName: 'Full Address',
-                    zoom: 10,
-                    moveToLocation: function(latlng, title, map) {
-                        const featureLayer = searchLayer.getLayers().find(layer => 
-                            layer.feature.properties['Full Address'] === title);
-                        if (featureLayer) {
-                            map.setView(latlng, 12);
-                            featureLayer.openPopup(); // Open the popup for the feature
-                        }
-                    },
-                    buildTip: function (title) { // Build the tooltip for the search results
-                        const feature = searchLayer.getLayers().find(layer => layer.feature.properties['Full Address'] === title);
-                        if (feature) {
-                            const lastName = feature.feature.properties['Last Name'];
-                            return `<strong>${lastName}<br><small>${title}`;
-                        }
+                    // Check if the text is in Full Address OR Last Name
+                    if (fullAddress.toLowerCase().includes(text.toLowerCase()) || 
+                        lastName.toLowerCase().includes(text.toLowerCase())) {
+                        
+                        // Combine Full Address and Last Name for the results
+                        results[fullAddress] = layer.feature.properties;
                     }
                 });
-                // Add the search control to the map
-                map.addControl(searchControl);
-            })
-            .catch(error => console.error('Error loading the GeoJSON file:', error));
+
+                return results;
+            },
+            propertyName: 'Full Address',
+            tooltipLimit: 10,
+            moveToLocation: function(latlng, title, map) {
+                const featureLayer = markers.getLayers().find(layer => 
+                    layer.feature.properties['Full Address'] === title);
+                if (featureLayer) {
+                    map.setView(latlng, 20); // Set zoom to 20 when moving to location
+                    markers.removeLayer(featureLayer); // Remove from cluster
+                    featureLayer.addTo(map); // Add marker directly to map
+                    featureLayer.openPopup(); // Open the popup for the feature
+                }
+            },
+            buildTip: function(title) { // Build the tooltip for the search results
+                const feature = markers.getLayers().find(layer => layer.feature.properties['Full Address'] === title);
+                if (feature) {
+                    const lastName = feature.feature.properties['Last Name'];
+                    return `<strong>${lastName}<br><small>${title}`;
+                }
+            }
+        });
+
+        map.addControl(searchControl);
     </script>
 </body>
 </html>
